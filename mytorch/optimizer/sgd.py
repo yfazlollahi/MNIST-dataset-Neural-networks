@@ -9,4 +9,10 @@ class SGD(Optimizer):
 
     def step(self):
         "TODO: implement SGD algorithm"
-        pass
+        for layer in self.layers:
+            for param_name, param in layer.parameters().items():
+                param.data -= self.learning_rate * param.grad.data
+
+    def zero_grad(self):
+        for layer in self.layers:
+                layer.zero_grad()
