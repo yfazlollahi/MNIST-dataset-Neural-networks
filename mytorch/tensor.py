@@ -126,7 +126,10 @@ class Tensor:
     
     def __setitem__(self, idcs, other):
         "TODO: handle tensor item assignment."
-        self._data[idcs] = ensure_array(other)
+        other = ensure_tensor(other)
+        if self.requires_grad or other.requires_grad:
+            raise ValueError("In-place operations (like item assignment) are not allowed for tensors that require gradients")
+        self.data[idcs] = other.data
 
     def __neg__(self) -> 'Tensor':
         return _tensor_neg(self)
@@ -171,7 +174,7 @@ def _tensor_log(t: Tensor) -> Tensor:
 
     if req_grad:
         def grad_fn(grad: np.ndarray):
-            return grad * (1 / t.data)
+            return grad / t.data
 
         depends_on = [Dependency(t, grad_fn)]
 
@@ -187,7 +190,7 @@ def _tensor_exp(t: Tensor) -> Tensor:
 
     if req_grad:
         def grad_fn(grad: np.ndarray):
-            return grad * np.exp(t.data)
+            return grad * data
 
         depends_on = [Dependency(t, grad_fn)]
 
@@ -231,8 +234,8 @@ def _tensor_slice(t: Tensor, idcs) -> Tensor:
 
 def _tensor_neg(t: Tensor) -> Tensor:
     "TODO: tensor negative"
-    data = -t.data
-    requires_grad = t.required_grad
+    data = - t.data
+    requires_grad = t.requires_grad
     if requires_grad:
         depends_on = [Dependency(t, lambda x: -x)]
     else:
@@ -279,7 +282,7 @@ def _add(t1: Tensor, t2: Tensor) -> Tensor:
 def _sub(t1: Tensor, t2: Tensor) -> Tensor:
     "TODO: implement sub"
     # Hint: a-b = a+(-b)
-    return _add(t1, _tensor_neg(t2)
+    return _add(t1, _tensor_neg(t2))
 
 def _mul(t1: Tensor, t2: Tensor) -> Tensor:
     # Done ( Don't change )

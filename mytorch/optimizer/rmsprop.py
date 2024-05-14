@@ -1,23 +1,26 @@
 from mytorch.optimizer import Optimizer
+import numpy as np
 
 "TODO: (optional) implement RMSprop optimizer"
 class RMSprop(Optimizer):
-    def __init__(self, layers: List[Layer], learning_rate=0.001, beta=0.9, epsilon=1e-8):
+    def __init__(self, layers, learning_rate=0.1, alpha=0.99, epsilon=1e-8):
         super().__init__(layers)
         self.learning_rate = learning_rate
-        self.beta = beta
+        self.alpha = alpha
         self.epsilon = epsilon
-        self.squared_gradients = {}
+        for layer in self.layers:
+            layer.weight_sq_avg = np.zeros_like(layer.weight.data)
+            if layer.need_bias:
+                layer.bias_sq_avg = np.zeros_like(layer.bias.data)
 
     def step(self):
         for layer in self.layers:
-            for param_name, param in layer.parameters().items():
-                if param_name not in self.squared_gradients:
-                    self.squared_gradients[param_name] = param.grad.data ** 2
-                else:
-                    self.squared_gradients[param_name] = self.beta * self.squared_gradients[param_name] + (1 - self.beta) * (param.grad.data ** 2)
-                param.data -= self.learning_rate * (param.grad.data / (np.sqrt(self.squared_gradients[param_name]) + self.epsilon))
-
-    def zero_grad(self):
-        for layer in self.layers:
-            layer.zero_grad()
+            layer.weight_sq_avg = self.alpha * layer.weight_sq_avg + \
+                (1 - self.alpha) * layer.weight.grad**2
+            layer.weight.data = layer.weight.data - self.learning_rate * \
+                (layer.weight.grad / (layer.weight_sq_avg**2 + self.epsilon))
+            if layer.need_bias:
+                layer.bias_sq_avg = self.alpha * layer.bias_sq_avg + \
+                    (1 - self.alpha) *layer.bias.grad**2
+                layer.bias.data = layer.bias.data - self.learning_rate * \
+                    (layer.bias.grad / (layer.bias_sq_avg**0.5 + self.epsilon))

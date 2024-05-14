@@ -1,25 +1,23 @@
 from mytorch.optimizer import Optimizer
+import numpy as np
 
 "TODO: (optional) implement Momentum optimizer"
 class Momentum(Optimizer):
-    def __init__(self, layers: List[Layer], learning_rate=0.001, momentum=0.9):
+    def __init__(self, layers, learning_rate=0.1, momentum=0.9):
         super().__init__(layers)
         self.learning_rate = learning_rate
         self.momentum = momentum
-        self.velocities = {}
+
+        for layer in self.layers:
+            layer.weight_velocity = np.zeros_like(layer.weight.data)
+            if layer.need_bias:
+                layer.bias_velocity = np.zeros_like(layer.bias.data)
 
     def step(self):
         for layer in self.layers:
-            for param_name, param in layer.parameters().items():
-                # Initialize velocities if not exists
-                if param_name not in self.velocities:
-                    self.velocities[param_name] = np.zeros_like(param.data)
-                # Update velocities
-                self.velocities[param_name] = self.momentum * self.velocities[param_name] - self.learning_rate * param.grad.data
-                # Update parameters
-                param.data += self.velocities[param_name]
+            layer.weight_velocity = self.momentum * layer.weight_velocity - self.learning_rate * layer.weight.grad
+            layer.weight.data = layer.weight.data + layer.weight_velocity
 
-    def zero_grad(self):
-        for layer in self.layers:
-            layer.zero_grad()
-
+            if layer.need_bias:
+                layer.bias_velocity = self.momentum * layer.bias_velocity - self.learning_rate * layer.bias.grad
+                layer.bias.data = layer.bias.data + layer.bias_velocity

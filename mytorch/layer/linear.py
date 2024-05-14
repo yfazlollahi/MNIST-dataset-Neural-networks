@@ -26,30 +26,28 @@ class Linear(Layer):
     def initialize(self):
         "TODO: initialize weight by initializer function (mode)"
         self.weight = Tensor(
-            data=initializer(self.inputs, self.outputs, mode=self.initialize_mode),
+            data=initializer((self.inputs, self.outputs), self.initialize_mode),
             requires_grad=True
         )
 
         "TODO: initialize bias by initializer function (zero mode)"
         if self.need_bias:
             self.bias = Tensor(
-                data=initializer(1, self.outputs, mode="zeros"),
+                data=initializer((self.outputs), "zero"),
                 requires_grad=True
             )
 
     def zero_grad(self):
         "TODO: implement zero grad"
-        if self.weight:
-            self.weight.grad = None
-        if self.bias:
-            self.bias.grad = None
+        self.weight.zero_grad()
+        if self.need_bias:
+            self.bias.zero_grad()
 
     def parameters(self):
         "TODO: return weights and bias"
-        params = [self.weight]
         if self.need_bias:
-            params.append(self.bias)
-        return params
+            return [self.weight,self.bias]
+        return self.bias
 
     def __str__(self) -> str:
         return "linear - total param: {} - in: {}, out: {}".format(self.inputs * self.outputs, self.inputs,
