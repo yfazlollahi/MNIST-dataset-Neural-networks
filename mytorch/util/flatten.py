@@ -7,7 +7,7 @@ def flatten(x: Tensor) -> Tensor:
     this methods transforms a n dimensional array into a flat array
     hint: use numpy flatten
     """
-    data = np.flatten(x.data)
+    data = x.data.flatten()
     req_grad = x.requires_grad
-    depends_on = [x] if req_grad else []
+    depends_on = x.depends_on
     return Tensor(data=data, requires_grad=req_grad, depends_on=depends_on)

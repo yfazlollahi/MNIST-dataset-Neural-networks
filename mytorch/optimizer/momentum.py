@@ -1,23 +1,29 @@
-from mytorch.optimizer import Optimizer
+from typing import List
+
 import numpy as np
 
+from mytorch.layer import Layer
+from mytorch.optimizer import Optimizer
+
 "TODO: (optional) implement Momentum optimizer"
+
+
 class Momentum(Optimizer):
-    def __init__(self, layers, learning_rate=0.1, momentum=0.9):
+    def __init__(self, layers: List[Layer], learning_rate=0.01, momentum=0.9):
         super().__init__(layers)
         self.learning_rate = learning_rate
         self.momentum = momentum
 
-        for layer in self.layers:
-            layer.weight_velocity = np.zeros_like(layer.weight.data)
-            if layer.need_bias:
-                layer.bias_velocity = np.zeros_like(layer.bias.data)
-
     def step(self):
+        """Perform one step of the Momentum optimization algorithm."""
         for layer in self.layers:
-            layer.weight_velocity = self.momentum * layer.weight_velocity - self.learning_rate * layer.weight.grad
-            layer.weight.data = layer.weight.data + layer.weight_velocity
+            if layer.parameters():
+                for param in layer.parameters():
+                    grad = param.grad.data
 
-            if layer.need_bias:
-                layer.bias_velocity = self.momentum * layer.bias_velocity - self.learning_rate * layer.bias.grad
-                layer.bias.data = layer.bias.data + layer.bias_velocity
+                    if not hasattr(param, 'velocity'):
+                        param.velocity = np.zeros_like(param.data)
+
+                    param.velocity = self.momentum * param.velocity - self.learning_rate * grad
+
+                    param.data += param.velocity

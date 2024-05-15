@@ -1,6 +1,8 @@
 import numpy as np
 from mytorch import Tensor, Dependency
 
+from mytorch.tensor import _tensor_exp, _tensor_sum, _tensor_pow
+
 
 def softmax(x: Tensor) -> Tensor:
     """
@@ -12,5 +14,5 @@ def softmax(x: Tensor) -> Tensor:
     hint: a/b = a*(b^-1)
     """
     exp_x = x.exp()
-    sum_exp_x = (exp_x @ Tensor(np.ones((x.shape[0], 1)))).reshape(-1)
-    return exp_x * sum_exp_x.pow(-1)
+    s = exp_x @ (np.ones((exp_x.shape[-1], 1)))
+    return exp_x * (s ** -1)

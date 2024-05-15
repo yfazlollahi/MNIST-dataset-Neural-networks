@@ -11,10 +11,10 @@ def relu(x: Tensor) -> Tensor:
     if req_grad:
         def grad_fn(grad: np.ndarray):
             # use np.where
-            return grad * (x.data > 0).astype(float)
+            return np.where(x.data < 0, 0, grad)
 
         depends_on = [Dependency(x, grad_fn)]
     else:
-        depends_on = []   
+        depends_on = []
     return Tensor(data=data, requires_grad=req_grad, depends_on=depends_on)
     
